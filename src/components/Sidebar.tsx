@@ -52,7 +52,6 @@ const Sidebar: React.FC = () => {
     const isLive = data !== null && data !== undefined;
     const isSelected = safeSelected.includes(channelId);
 
-    // 에러/오프라인 시 방제 및 부제목 처리
     let defaultTitle = isLive ? data.liveTitle : '방송 중이 아니거나 없는 채널입니다';
     let defaultSubtitle = customName ? customName : (isLive ? data.channelName : channelId.substring(0, 10) + '...');
     if (!isLive && customName) {
@@ -65,11 +64,11 @@ const Sidebar: React.FC = () => {
         onClick={() => toggleSelectedChannel(channelId)}
         className={`group relative flex flex-col rounded-xl border transition-all duration-300 cursor-pointer overflow-hidden ${
           isSelected 
-            ? 'border-[#00FF87] shadow-[0_0_15px_rgba(0,255,135,0.2)] scale-[1.02]' 
-            : 'border-white/5 hover:border-white/20'
-        } ${!isLive ? 'opacity-60 grayscale hover:grayscale-0 hover:opacity-100 bg-white/[0.02]' : ''}`}
+            ? 'border-[#A855F7] shadow-[0_0_20px_rgba(168,85,247,0.3)] scale-[1.02] bg-[#A855F7]/10' 
+            : 'border-white/5 hover:border-[#D8B4FE]/40 bg-white/5'
+        } ${!isLive ? 'opacity-50 grayscale hover:grayscale-0 hover:opacity-100' : ''}`}
       >
-        <div className="relative w-full aspect-video bg-[#1e1e24] overflow-hidden">
+        <div className="relative w-full aspect-video bg-[#0B0813] overflow-hidden">
           <img
             src={isLive ? (data.liveThumbnailImageUrl?.replace('{type}', '480') || placeholderImg) : placeholderImg}
             alt="Thumbnail"
@@ -78,17 +77,17 @@ const Sidebar: React.FC = () => {
           />
           {isLive && (
             <>
-              <div className="absolute top-2 left-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow-lg uppercase tracking-wider">
+              <div className="absolute top-2 left-2 bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow-lg uppercase tracking-wider backdrop-blur-sm">
                 LIVE
               </div>
-              <div className="absolute bottom-2 left-2 bg-black/80 backdrop-blur-sm text-white text-xs font-semibold px-2 py-1 rounded-md flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 bg-[#ff3b30] rounded-full animate-pulse shadow-[0_0_6px_#ff3b30]" />
+              <div className="absolute bottom-2 left-2 bg-black/70 backdrop-blur-md text-white text-xs font-semibold px-2 py-1 rounded-md flex items-center gap-1.5 shadow-xl border border-white/10">
+                <span className="w-1.5 h-1.5 bg-[#ff3b30] rounded-full animate-pulse shadow-[0_0_8px_#ff3b30]" />
                 {formatViewers(data.concurrentUserCount)}
               </div>
             </>
           )}
           {!isLive && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-white/70 text-sm font-medium">
+            <div className="absolute inset-0 flex items-center justify-center bg-[#0B0813]/80 text-[#BCA5FF]/60 text-sm font-medium backdrop-blur-sm">
               오프라인
             </div>
           )}
@@ -104,22 +103,22 @@ const Sidebar: React.FC = () => {
           )}
         </div>
 
-        <div className={`p-3 flex items-start gap-3 relative ${isLive ? 'bg-white/[0.04]' : 'bg-transparent'}`}>
+        <div className={`p-3 flex items-start gap-3 relative ${isLive ? 'bg-gradient-to-b from-transparent to-[#2E1065]/30' : 'bg-transparent'}`}>
           <img
             src={isLive ? (data.channelImageUrl || placeholderImg) : placeholderImg}
             alt="Profile"
-            className="w-9 h-9 rounded-full object-cover bg-gray-800 border border-white/10"
+            className="w-9 h-9 rounded-full object-cover bg-[#1E1B4B] border border-[#A855F7]/30 shadow-[0_0_10px_rgba(168,85,247,0.2)]"
             onError={(e) => { (e.target as HTMLImageElement).src = placeholderImg; }}
           />
           <div className="flex-1 min-w-0 flex flex-col gap-0.5 pr-1">
-            <span className="text-sm text-white font-medium truncate leading-tight">
+            <span className="text-sm text-white font-medium truncate leading-tight mt-0.5">
               {defaultTitle}
             </span>
-            <span className="text-xs text-gray-400 font-medium truncate">
+            <span className="text-xs text-[#D8B4FE]/70 font-medium truncate">
               {defaultSubtitle}
             </span>
             {isLive && data.liveCategoryValue && (
-              <span className="text-[10px] text-[#00FF87] font-semibold mt-1">
+              <span className="text-[10px] text-[#A855F7] font-bold mt-1 tracking-wide">
                 {data.liveCategoryValue}
               </span>
             )}
@@ -134,8 +133,11 @@ const Sidebar: React.FC = () => {
     if (!mems.length) return null;
 
     return (
-      <div className="mb-6">
-        <h3 className="text-sm font-bold text-white/80 mb-3 px-1 border-l-2 border-[#00FF87] pl-2">{title}</h3>
+      <div className="mb-8">
+        <h3 className="text-sm font-bold text-[#F3E8FF] mb-4 px-1 flex items-center gap-2">
+          <span className="w-1 h-3.5 bg-gradient-to-b from-[#D8B4FE] to-[#9333EA] rounded-full inline-block"></span>
+          {title}
+        </h3>
         <div className="flex flex-col gap-3">
           {mems.map((member) => renderChannelCard(member.id, member.name, false))}
         </div>
@@ -144,14 +146,14 @@ const Sidebar: React.FC = () => {
   };
 
   return (
-    <aside className="w-[320px] h-screen bg-[#141416]/95 backdrop-blur-md border-r border-white/5 flex flex-col p-4 overflow-y-auto shrink-0 z-50 shadow-2xl relative scrollbar-thin scrollbar-thumb-white/10">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-black tracking-tight bg-gradient-to-br from-[#00FF87] to-[#5EEAFF] bg-clip-text text-transparent">
-          스텔뷰
+    <aside className="w-[320px] h-screen bg-[#0A0514]/80 backdrop-blur-xl border-r border-[#6D28D9]/20 flex flex-col p-5 overflow-y-auto shrink-0 z-50 shadow-[4px_0_24px_rgba(0,0,0,0.5)] relative">
+      <div className="flex justify-between items-center mb-8">
+        <h2 className="text-3xl font-black tracking-tighter bg-gradient-to-br from-[#F3E8FF] via-[#D8B4FE] to-[#A855F7] bg-clip-text text-transparent drop-shadow-[0_2px_10px_rgba(168,85,247,0.4)]">
+          Stelview
         </h2>
         <button 
           onClick={handleManualRefresh}
-          className={`p-1.5 rounded-md hover:bg-white/10 transition-colors text-white/50 hover:text-white ${isLoading ? 'animate-spin opacity-50 cursor-not-allowed' : ''}`}
+          className={`p-2 rounded-lg hover:bg-[#A855F7]/20 transition-all text-[#D8B4FE]/60 hover:text-[#F3E8FF] border border-transparent hover:border-[#A855F7]/30 ${isLoading ? 'animate-spin opacity-50 cursor-not-allowed text-[#A855F7]' : ''}`}
           disabled={isLoading}
           title="새로고침"
         >
@@ -163,21 +165,24 @@ const Sidebar: React.FC = () => {
       {renderGenerationSection('2기생 (Universe)', 2)}
       {renderGenerationSection('3기생 (Cliché)', 3)}
       
-      {/* 내 즐겨찾기 섹션 */}
-      <div className="mt-4 pt-6 border-t border-white/10">
-        <h3 className="text-sm font-bold text-[#00FF87]/80 mb-4 px-1 border-l-2 border-[#00FF87]/80 pl-2">내 즐겨찾기</h3>
-        <form onSubmit={handleAddChannel} className="flex gap-2 mb-4">
+      {/* 내 즐겨찾기 섹션 (스텔라이브 외 채널들) */}
+      <div className="mt-2 pt-6 border-t border-[#6D28D9]/30">
+        <h3 className="text-sm font-bold text-[#F3E8FF] mb-4 px-1 flex items-center gap-2 drop-shadow-md">
+           <span className="w-1 h-3.5 bg-gradient-to-b from-[#A855F7] to-[#4C1D95] rounded-full inline-block"></span>
+           스텔라이브 외 채널 추가
+        </h3>
+        <form onSubmit={handleAddChannel} className="flex gap-2 mb-5">
           <input
             type="text"
             placeholder="치지직 ID 입력"
             value={newChannelId}
             onChange={(e) => setNewChannelId(e.target.value)}
-            className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[#00FF87] focus:ring-1 focus:ring-[#00FF87]/50 transition-all shadow-inner"
+            className="flex-1 bg-[#1E1B4B]/30 border border-[#8B5CF6]/30 rounded-lg px-3 py-2.5 text-sm text-white placeholder-[#8B5CF6]/50 focus:outline-none focus:border-[#D8B4FE] focus:ring-2 focus:ring-[#A855F7]/40 transition-all shadow-inner"
           />
           <button
             type="submit"
             disabled={!newChannelId.trim() || isLoading}
-            className="bg-[#00FF87]/10 text-[#00FF87] hover:bg-[#00FF87]/20 disabled:opacity-50 disabled:cursor-not-allowed p-2 rounded-lg transition-colors flex items-center justify-center shrink-0 border border-[#00FF87]/30 shadow-sm"
+            className="bg-[#8B5CF6]/20 text-[#D8B4FE] hover:bg-[#8B5CF6]/40 disabled:opacity-50 disabled:cursor-not-allowed p-2.5 rounded-lg transition-all flex items-center justify-center shrink-0 border border-[#8B5CF6]/40 shadow-lg hover:shadow-[0_0_15px_rgba(168,85,247,0.4)]"
             title="채널 추가"
           >
             <Plus size={20} />
@@ -185,7 +190,7 @@ const Sidebar: React.FC = () => {
         </form>
 
         {safeFavorites.length === 0 ? (
-          <div className="text-gray-500 text-xs py-4 flex flex-col items-center justify-center text-center">
+          <div className="text-[#8B5CF6]/50 text-xs py-6 flex flex-col items-center justify-center text-center bg-[#1E1B4B]/10 rounded-xl border border-dashed border-[#8B5CF6]/20">
             등록된 추가 채널이 없습니다.
           </div>
         ) : (

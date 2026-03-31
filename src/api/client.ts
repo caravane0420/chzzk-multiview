@@ -1,31 +1,19 @@
-const CHZZK_API_BASE_URL = 'https://openapi.chzzk.naver.com';
+const clientId = import.meta.env.VITE_CHZZK_CLIENT_ID || '';
 
-export const chzzkFetch = async <T = any>(
-  endpoint: string,
-  options: RequestInit = {}
-): Promise<T> => {
-  const clientId = import.meta.env.VITE_CHZZK_CLIENT_ID;
-
-  if (!clientId) {
-    console.warn('VITE_CHZZK_CLIENT_ID is not defined in environment variables.');
-  }
-
-  const defaultHeaders = {
-    'Client-Id': clientId || '',
-    'Content-Type': 'application/json',
-  };
-
-  const response = await fetch(`${CHZZK_API_BASE_URL}${endpoint}`, {
+export async function chzzkFetch<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  // 프록시 설정에 맞추어 도메인 없이 상대 경로로 요청
+  const url = endpoint.startsWith('/open') ? endpoint : `/open${endpoint}`;
+  const response = await fetch(url, {
     ...options,
     headers: {
-      ...defaultHeaders,
+      'Client-Id': clientId,
       ...options.headers,
     },
   });
 
   if (!response.ok) {
-    throw new Error(`Naver Chzzk API request failed: ${response.status} ${response.statusText}`);
+    throw new Error(`Chzzk API Error: ${response.status} ${response.statusText}`);
   }
 
   return response.json();
-};
+}

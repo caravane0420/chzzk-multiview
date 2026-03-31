@@ -9,7 +9,6 @@ const App: React.FC = () => {
   const selectedChannels = useStore((state) => state.selectedChannels);
   const fetchLiveStatus = useStore((state) => state.fetchLiveStatus);
 
-  // 1. URL의 ?channels= 파라미터가 바뀌면 Zustand의 selectedChannels 업데이트 (URL -> Store 양방향 방어코드 추가)
   useEffect(() => {
     const channelsParam = searchParams.get('channels');
     if (channelsParam) {
@@ -21,7 +20,6 @@ const App: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
-  // 2. 사이드바 등에서 클릭으로 selectedChannels 변경 시 URL 실시간 업데이트 (Store -> URL 양방향)
   useEffect(() => {
     const currentParam = searchParams.get('channels') || '';
     const safeSelectedChannels = Array.isArray(selectedChannels) ? selectedChannels : [];
@@ -38,13 +36,18 @@ const App: React.FC = () => {
     }
   }, [selectedChannels, searchParams, setSearchParams]);
 
-  // 3. 앱 마운트 시 최초 데이터 로드 (딱 한 번)
   useEffect(() => {
     fetchLiveStatus();
   }, [fetchLiveStatus]);
 
+  // 스텔라이브 전용 '심우주, 밤하늘' 컨셉 테마
+  // w-screen h-screen overflow-hidden 으로 스크롤이나 여백 없는 하드 핏 유지
   return (
-    <div className="flex w-screen h-screen overflow-hidden bg-black text-white selection:bg-[#00FF87] selection:text-black">
+    <div className="flex w-screen h-screen overflow-hidden bg-[#05010B] text-white selection:bg-[#8B5CF6] selection:text-white relative z-0">
+      {/* 백그라운드 별빛 + 보라색 성운 효과 */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[#3B0764]/40 via-[#05010B] to-[#0A0514] -z-10 pointer-events-none" />
+      <div className="absolute top-[10%] left-[20%] w-[500px] h-[500px] bg-[#6D28D9]/10 blur-[150px] rounded-full pointer-events-none" />
+      
       <Sidebar />
       <MultiViewGrid />
     </div>
