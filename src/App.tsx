@@ -1,34 +1,62 @@
 import React, { useEffect } from 'react';
-import { useStore } from './store/useStore';
+import { BrowserRouter, useSearchParams } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
+import MultiViewGrid from './components/MultiViewGrid';
+import { useStore } from './store/useStore';
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selectedChannels = useStore((state) => state.selectedChannels);
   const fetchLiveStatus = useStore((state) => state.fetchLiveStatus);
 
-  // 마운트 시 최초 데이터 로드
+  // 1. URL의 ?channels= 파라미터가 바뀌면 Zustand의 selectedChannels 업데이트 (URL -> Store 양방향)
+  useEffect(() => {
+    const channelsParam = searchParams.get('channels');
+    if (channelsParam) {
+      const ids = channelsParam.split(',').filter(Boolean);
+      useStore.setState({ selectedChannels: ids });
+    } else {
+      useStore.setState({ selectedChannels: [] });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
+  // 2. 사이드바 등의 클릭으로 selectedChannels 변경 시 URL 실시간 업데이트 (Store -> URL 양방향)
+  useEffect(() => {
+    const currentParam = searchParams.get('channels') || '';
+    const newParam = selectedChannels.join(',');
+
+    if (currentParam !== newParam) {
+      if (selectedChannels.length > 0) {
+        setSearchParams({ channels: newParam }, { replace: true });
+      } else {
+        const nextParams = new URLSearchParams(searchParams);
+        nextParams.delete('channels');
+        setSearchParams(nextParams, { replace: true });
+      }
+    }
+  }, [selectedChannels, searchParams, setSearchParams]);
+
+  // 3. 앱 마운트 시 최초 데이터 로드 (딱 한 번)
   useEffect(() => {
     fetchLiveStatus();
   }, [fetchLiveStatus]);
 
   return (
     <div className="flex w-screen h-screen overflow-hidden bg-black text-white selection:bg-[#00FF87] selection:text-black">
-      {/* 1. 스트리머 목록을 렌더링할 사이드바 컨테이너 */}
       <Sidebar />
-
-      {/* 2. 메인 컨텐츠 영역 (방송 화면이 추가될 영역) */}
-      <main className="flex-1 flex flex-col items-center justify-center bg-[#09090b] relative z-0">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,255,135,0.06)_0%,transparent_50%)] pointer-events-none" />
-        
-        <div className="flex flex-col items-center text-center gap-4 z-10 px-8">
-          <h1 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
-            치지직 화면을 예쁘게
-          </h1>
-          <p className="text-lg text-gray-400 max-w-lg">
-            좌측 사이드바에서 시청을 원하는 스트리머를 선택해주세요. 상태 관리와 UI 기초 공사가 완료되었습니다!
-          </p>
-        </div>
-      </main>
+      
+      {/* 안내 텍스트 영역을 지우고 만들어둔 멀티뷰 그리드를 렌더링하도록 교체 */}
+      <MultiViewGrid />
     </div>
+  );
+};
+
+const App: React.FC = () => {
+  return (
+    <BrowserRouter>
+      <AppContent />
+    </BrowserRouter>
   );
 };
 
