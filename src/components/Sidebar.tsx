@@ -16,6 +16,9 @@ const Sidebar: React.FC = () => {
 
   const [newChannelId, setNewChannelId] = useState('');
 
+  const safeFavorites = Array.isArray(favoriteChannels) ? favoriteChannels : [];
+  const safeSelected = Array.isArray(selectedChannels) ? selectedChannels : [];
+
   const formatViewers = (count: number) => {
     if (count >= 10000) return `${(count / 10000).toFixed(1)}만명`;
     if (count >= 1000) return `${(count / 1000).toFixed(1)}천명`;
@@ -29,16 +32,16 @@ const Sidebar: React.FC = () => {
 
     addFavoriteChannel(trimmedId);
     setNewChannelId('');
-    await fetchLiveStatus(true); // 채널 추가 시 1분 쿨링타임을 무시하고 강제로 즉시 업데이트 (force = true)
+    await fetchLiveStatus(true); 
   };
 
   const handleRemoveChannel = (e: React.MouseEvent, channelId: string) => {
-    e.stopPropagation(); // 오동작(토글) 방지
+    e.stopPropagation(); 
     removeFavoriteChannel(channelId);
   };
 
   const handleManualRefresh = () => {
-    fetchLiveStatus(true); // 수동 새로고침 클릭 시 강제 업데이트
+    fetchLiveStatus(true); 
   };
 
   const placeholderImg = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMzMzMiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZmlsbD0iIzY2NiIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5ObyBJbWFnZTwvdGV4dD48L3N2Zz4=';
@@ -49,18 +52,17 @@ const Sidebar: React.FC = () => {
         <h2 className="text-xl font-bold bg-gradient-to-br from-[#00FF87] to-[#5EEAFF] bg-clip-text text-transparent">
           즐겨찾기 채널
         </h2>
-        {/* 우측 상단 수동 새로고침 버튼 (API 로딩 상태 시 회전 애니메이션) */}
         <button 
           onClick={handleManualRefresh}
           className={`p-1.5 rounded-md hover:bg-white/10 transition-colors text-white/50 hover:text-white ${isLoading ? 'animate-spin opacity-50 cursor-not-allowed' : ''}`}
           disabled={isLoading}
-          title="새로고침 (1분 쿨링 무시)"
+          title="새로고침"
         >
           <RefreshCw size={18} />
         </button>
       </div>
       
-      {/* 채널 추가 폼 */}
+      {/* 사용자가 직접 채널을 추가/삭제할 수 있는 폼 */}
       <form onSubmit={handleAddChannel} className="flex gap-2 mb-6">
         <input
           type="text"
@@ -71,7 +73,7 @@ const Sidebar: React.FC = () => {
         />
         <button
           type="submit"
-          disabled={!newChannelId.trim() || isLoading} // 로딩 중이거나 값이 없으면 버튼 비활성화
+          disabled={!newChannelId.trim() || isLoading}
           className="bg-[#00FF87]/10 text-[#00FF87] hover:bg-[#00FF87]/20 disabled:opacity-50 disabled:cursor-not-allowed p-2 rounded-lg transition-colors flex items-center justify-center shrink-0 border border-[#00FF87]/30 shadow-sm"
           title="채널 추가"
         >
@@ -79,17 +81,17 @@ const Sidebar: React.FC = () => {
         </button>
       </form>
 
-      {favoriteChannels.length === 0 ? (
+      {safeFavorites.length === 0 ? (
         <div className="text-gray-500 text-sm py-10 flex flex-col items-center justify-center text-center gap-2">
           <span>등록된 채널이 없습니다.</span>
           <span className="text-xs text-gray-600">상단에 채널 ID를 입력해 추가해보세요.</span>
         </div>
       ) : (
         <div className="flex flex-col gap-3">
-          {favoriteChannels.map((channelId) => {
+          {safeFavorites.map((channelId) => {
             const data = liveData[channelId];
             const isLive = data !== null && data !== undefined;
-            const isSelected = selectedChannels.includes(channelId);
+            const isSelected = safeSelected.includes(channelId);
 
             return (
               <div
@@ -120,14 +122,13 @@ const Sidebar: React.FC = () => {
                       </div>
                     </>
                   )}
-                  {/* 방어 코드 처리 (에러 OR 단순히 방송 꺼짐) */}
                   {!isLive && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-white/70 text-sm font-medium">
                       오프라인 / 혹은 알 수 없는 채널
                     </div>
                   )}
                   
-                  {/* 휴지통 버튼 */}
+                  {/* 각 채널 리스트 항목 우측 상단의 휴지통 아이콘 */}
                   <button
                     onClick={(e) => handleRemoveChannel(e, channelId)}
                     className="absolute top-2 right-2 p-1.5 bg-black/60 text-white/50 hover:bg-red-500 hover:text-white rounded-md transition-all opacity-0 group-hover:opacity-100 backdrop-blur-md z-10 shadow-lg"
