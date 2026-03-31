@@ -53,7 +53,7 @@ const Sidebar: React.FC = () => {
   const handleShare = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
-      setToastMessage('클립보드에 공유 링크가 복사되었습니다! 🎉');
+      setToastMessage('스텔뷰 설정이 복사되었습니다!');
       // 3초 후 토스트 숨김
       setTimeout(() => setToastMessage(''), 3000);
     } catch (err) {
