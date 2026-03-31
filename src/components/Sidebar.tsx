@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
-import { Plus, Trash2, RefreshCw, LayoutGrid, PanelLeft, Share2, Volume2, VolumeX } from 'lucide-react';
+import { Plus, Trash2, RefreshCw, LayoutGrid, PanelLeft, Share2, Volume2, VolumeX, PanelLeftClose, PanelRightOpen } from 'lucide-react';
 import { STELLIVE_MEMBERS } from '../data/stellive';
 
 const Sidebar: React.FC = () => {
@@ -11,8 +11,10 @@ const Sidebar: React.FC = () => {
     isLoading,
     layoutMode,
     isSingleAudioMode,
+    isSidebarOpen,
     setLayoutMode,
     toggleAudioMode,
+    toggleSidebar,
     toggleSelectedChannel,
     addFavoriteChannel,
     removeFavoriteChannel,
@@ -163,7 +165,21 @@ const Sidebar: React.FC = () => {
 
   return (
     <>
-      <aside className="w-[320px] h-screen bg-[#0A0514]/80 backdrop-blur-xl border-r border-[#6D28D9]/20 flex flex-col p-5 overflow-y-auto shrink-0 z-50 shadow-[4px_0_24px_rgba(0,0,0,0.5)] relative custom-scrollbar">
+      {/* 🌟 좌측 사이드바 펼치기/접기 플로팅 버튼 */}
+      <button 
+        onClick={toggleSidebar}
+        className={`fixed top-1/2 -translate-y-1/2 z-[60] p-1.5 py-4 bg-[#1E1B4B]/90 text-[#D8B4FE] border border-[#A855F7]/30 backdrop-blur-md transition-all duration-300 hover:bg-[#6D28D9]/60 hover:text-white shadow-[4px_0_20px_rgba(168,85,247,0.3)] ${
+          isSidebarOpen ? 'left-[320px] rounded-r-lg border-l-0' : 'left-0 rounded-r-lg border-l-0'
+        }`}
+        title={isSidebarOpen ? "사이드바 접기" : "사이드바 펴기"}
+      >
+        {isSidebarOpen ? <PanelLeftClose size={20} /> : <PanelRightOpen size={20} />}
+      </button>
+
+      {/* 사이드바 본체 (접혔을 때 넓이가 0이 되어 메인 디스플레이가 100%를 차지하게 함) */}
+      <aside className={`h-screen bg-[#0A0514]/80 backdrop-blur-xl border-t-0 border-b-0 border-l-0 border-r border-[#6D28D9]/20 flex flex-col overflow-y-auto overflow-x-hidden shrink-0 z-50 shadow-[4px_0_24px_rgba(0,0,0,0.5)] relative custom-scrollbar transition-all duration-300 ease-in-out ${
+        isSidebarOpen ? 'w-[320px] p-5 opacity-100' : 'w-0 p-0 opacity-0 pointer-events-none'
+      }`}>
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-3xl font-black tracking-tighter bg-gradient-to-br from-[#F3E8FF] via-[#D8B4FE] to-[#A855F7] bg-clip-text text-transparent drop-shadow-[0_2px_10px_rgba(168,85,247,0.4)]">
             Stelview

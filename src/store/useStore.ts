@@ -19,6 +19,7 @@ interface AppState {
   isLoading: boolean;
   lastFetchTime: number;
   isSingleAudioMode: boolean;
+  isSidebarOpen: boolean;
   
   addFavoriteChannel: (channelId: string) => void;
   removeFavoriteChannel: (channelId: string) => void;
@@ -26,6 +27,7 @@ interface AppState {
   setMainChannel: (channelId: string | null) => void;
   setLayoutMode: (mode: LayoutMode) => void;
   toggleAudioMode: () => void;
+  toggleSidebar: () => void;
   fetchLiveStatus: (force?: boolean) => Promise<void>;
 }
 
@@ -40,6 +42,7 @@ export const useStore = create<AppState>()(
       isLoading: false,
       lastFetchTime: 0,
       isSingleAudioMode: true,
+      isSidebarOpen: true,
 
       addFavoriteChannel: (channelId) =>
         set((state) => {
@@ -90,6 +93,9 @@ export const useStore = create<AppState>()(
       toggleAudioMode: () =>
         set((state) => ({ isSingleAudioMode: !state.isSingleAudioMode })),
 
+      toggleSidebar: () =>
+        set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
+
       fetchLiveStatus: async (force = false) => {
         const { favoriteChannels, lastFetchTime, isLoading } = get();
         
@@ -122,19 +128,19 @@ export const useStore = create<AppState>()(
 
               if (json?.content?.status === 'OPEN') {
                 const data: ChzzkLive = {
-                  liveTitle: json.content.liveTitle,
-                  liveThumbnailImageUrl: json.content.liveImageUrl,
-                  concurrentUserCount: json.content.concurrentUserCount,
-                  channelName: json.content.channel.channelName,
-                  channelImageUrl: json.content.channel.channelImageUrl,
-                  liveCategoryValue: json.content.liveCategoryValue,
-                  
                   liveId: json.content.liveId || 0,
-                  defaultThumbnailImageUrl: json.content.defaultThumbnailImageUrl || '',
+                  liveTitle: json.content.liveTitle || '',
+                  liveThumbnailImageUrl: json.content.liveImageUrl || null,
+                  concurrentUserCount: json.content.concurrentUserCount || 0,
                   openDate: json.content.openDate || '',
-                  closeDate: json.content.closeDate || '',
-                  chatChannelId: json.content.chatChannelId || '',
-                  categoryType: json.content.categoryType || '',
+                  adult: json.content.adult || false,
+                  tags: json.content.tags || [],
+                  categoryType: json.content.categoryType || null,
+                  liveCategory: json.content.liveCategory || null,
+                  liveCategoryValue: json.content.liveCategoryValue || null,
+                  channelId: channelId,
+                  channelName: json.content.channel?.channelName || '',
+                  channelImageUrl: json.content.channel?.channelImageUrl || null,
                 };
 
                 return { channelId, data } as LiveStatusResult;
@@ -168,10 +174,11 @@ export const useStore = create<AppState>()(
     }),
     {
       name: 'chzzk-store',
-      // URL이 우선순위를 갖지 않는 커스텀 채널 목록과 유저 오디오 설정만 로컬스토리지에 보존
+      // URL이 우선순위를 갖지 않는 커스텀 채널 목록, 유저 오디오 설정, 사이드바 토글 상태만 로컬스토리지에 보존
       partialize: (state) => ({ 
         favoriteChannels: state.favoriteChannels,
         isSingleAudioMode: state.isSingleAudioMode,
+        isSidebarOpen: state.isSidebarOpen,
       }),
       merge: (persistedState: any, currentState) => {
         return {
