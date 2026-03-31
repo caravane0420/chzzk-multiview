@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
-import { Plus, Trash2, RefreshCw, LayoutGrid, PanelLeft, Share2 } from 'lucide-react';
+import { Plus, Trash2, RefreshCw, LayoutGrid, PanelLeft, Share2, Volume2, VolumeX } from 'lucide-react';
 import { STELLIVE_MEMBERS } from '../data/stellive';
 
 const Sidebar: React.FC = () => {
@@ -10,7 +10,9 @@ const Sidebar: React.FC = () => {
     selectedChannels, 
     isLoading,
     layoutMode,
+    isSingleAudioMode,
     setLayoutMode,
+    toggleAudioMode,
     toggleSelectedChannel,
     addFavoriteChannel,
     removeFavoriteChannel,
@@ -147,7 +149,7 @@ const Sidebar: React.FC = () => {
     if (!mems.length) return null;
 
     return (
-      <div className="mb-8">
+      <div className="mb-6 mt-2">
         <h3 className="text-sm font-bold text-[#F3E8FF] mb-4 px-1 flex items-center gap-2">
           <span className="w-1 h-3.5 bg-gradient-to-b from-[#D8B4FE] to-[#9333EA] rounded-full inline-block"></span>
           {title}
@@ -161,7 +163,7 @@ const Sidebar: React.FC = () => {
 
   return (
     <>
-      <aside className="w-[320px] h-screen bg-[#0A0514]/80 backdrop-blur-xl border-r border-[#6D28D9]/20 flex flex-col p-5 overflow-y-auto shrink-0 z-50 shadow-[4px_0_24px_rgba(0,0,0,0.5)] relative">
+      <aside className="w-[320px] h-screen bg-[#0A0514]/80 backdrop-blur-xl border-r border-[#6D28D9]/20 flex flex-col p-5 overflow-y-auto shrink-0 z-50 shadow-[4px_0_24px_rgba(0,0,0,0.5)] relative custom-scrollbar">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-3xl font-black tracking-tighter bg-gradient-to-br from-[#F3E8FF] via-[#D8B4FE] to-[#A855F7] bg-clip-text text-transparent drop-shadow-[0_2px_10px_rgba(168,85,247,0.4)]">
             Stelview
@@ -185,31 +187,64 @@ const Sidebar: React.FC = () => {
           </div>
         </div>
 
-        {/* 레이아웃 컨트롤 패널 */}
-        <div className="flex bg-[#1E1B4B]/40 rounded-xl p-1.5 border border-[#6D28D9]/20 mb-8 shadow-inner relative">
-          <button
-            onClick={() => setLayoutMode('grid')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-semibold rounded-lg transition-all z-10 ${
-              layoutMode === 'grid' 
-                ? 'bg-gradient-to-br from-[#A855F7] to-[#7E22CE] text-white shadow-[0_0_15px_rgba(168,85,247,0.5)]' 
-                : 'text-[#D8B4FE]/60 hover:text-[#D8B4FE] hover:bg-white/5'
+        {/* 1. 컨트롤 패널 컨테이너 (레이아웃 & 오디오 묶음) */}
+        <div className="flex flex-col gap-3 mb-6">
+          
+          {/* 레이아웃 전환 뷰 컨트롤 토글 */}
+          <div className="flex bg-[#1E1B4B]/40 rounded-xl p-1.5 border border-[#6D28D9]/20 shadow-inner relative">
+            <button
+              onClick={() => setLayoutMode('grid')}
+              className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-bold rounded-lg transition-all z-10 ${
+                layoutMode === 'grid' 
+                  ? 'bg-gradient-to-br from-[#A855F7] to-[#7E22CE] text-white shadow-[0_0_15px_rgba(168,85,247,0.5)]' 
+                  : 'text-[#D8B4FE]/60 hover:text-[#D8B4FE] hover:bg-white/5'
+              }`}
+            >
+              <LayoutGrid size={16} />
+              바둑판 뷰
+            </button>
+            <button
+              onClick={() => setLayoutMode('main-sub')}
+              className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-bold rounded-lg transition-all z-10 ${
+                layoutMode === 'main-sub' 
+                  ? 'bg-gradient-to-br from-[#A855F7] to-[#7E22CE] text-white shadow-[0_0_15px_rgba(168,85,247,0.5)]' 
+                  : 'text-[#D8B4FE]/60 hover:text-[#D8B4FE] hover:bg-white/5'
+              }`}
+            >
+              <PanelLeft size={16} />
+              집중 뷰
+            </button>
+          </div>
+
+          {/* 오디오 설정(메인 소리만 듣기) 컨트롤 토글 */}
+          <button 
+            onClick={toggleAudioMode}
+            className={`flex flex-col items-center justify-center w-full py-2.5 px-3 rounded-xl border transition-all ${
+              isSingleAudioMode
+                ? 'bg-[#A855F7]/20 border-[#A855F7]/50 shadow-[0_0_15px_rgba(168,85,247,0.2)]'
+                : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
             }`}
           >
-            <LayoutGrid size={16} />
-            바둑판 뷰
-          </button>
-          <button
-            onClick={() => setLayoutMode('main-sub')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-semibold rounded-lg transition-all z-10 ${
-              layoutMode === 'main-sub' 
-                ? 'bg-gradient-to-br from-[#A855F7] to-[#7E22CE] text-white shadow-[0_0_15px_rgba(168,85,247,0.5)]' 
-                : 'text-[#D8B4FE]/60 hover:text-[#D8B4FE] hover:bg-white/5'
-            }`}
-          >
-            <PanelLeft size={16} />
-            집중 뷰
+            <div className="flex items-center gap-2 mb-1">
+              {isSingleAudioMode ? (
+                <Volume2 size={16} className="text-[#D8B4FE]" />
+              ) : (
+                <VolumeX size={16} className="text-gray-400" />
+              )}
+              <span className={`text-sm font-bold ${isSingleAudioMode ? 'text-[#F3E8FF]' : 'text-gray-300'}`}>
+                메인 소리만 듣기
+              </span>
+            </div>
+            <p className={`text-[10px] ${isSingleAudioMode ? 'text-[#D8B4FE]/80' : 'text-gray-500'}`}>
+              {isSingleAudioMode 
+                ? '이제 메인 화면의 소리만 활성화됩니다' 
+                : '모든 화면의 소리가 섞여서 들립니다'}
+            </p>
           </button>
         </div>
+
+        {/* 예쁜 구분선 */}
+        <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-[#6D28D9]/40 to-transparent mb-4" />
 
         {renderGenerationSection('1기생 (Mystic)', 1)}
         {renderGenerationSection('2기생 (Universe)', 2)}

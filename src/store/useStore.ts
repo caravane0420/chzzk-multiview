@@ -18,12 +18,14 @@ interface AppState {
   layoutMode: LayoutMode;
   isLoading: boolean;
   lastFetchTime: number;
+  isSingleAudioMode: boolean;
   
   addFavoriteChannel: (channelId: string) => void;
   removeFavoriteChannel: (channelId: string) => void;
   toggleSelectedChannel: (channelId: string) => void;
   setMainChannel: (channelId: string | null) => void;
   setLayoutMode: (mode: LayoutMode) => void;
+  toggleAudioMode: () => void;
   fetchLiveStatus: (force?: boolean) => Promise<void>;
 }
 
@@ -37,6 +39,7 @@ export const useStore = create<AppState>()(
       layoutMode: 'grid',       // 초기 레이아웃 모드
       isLoading: false,
       lastFetchTime: 0,
+      isSingleAudioMode: true,
 
       addFavoriteChannel: (channelId) =>
         set((state) => {
@@ -83,6 +86,9 @@ export const useStore = create<AppState>()(
 
       setLayoutMode: (mode) =>
         set({ layoutMode: mode }),
+
+      toggleAudioMode: () =>
+        set((state) => ({ isSingleAudioMode: !state.isSingleAudioMode })),
 
       fetchLiveStatus: async (force = false) => {
         const { favoriteChannels, lastFetchTime, isLoading } = get();
@@ -162,8 +168,11 @@ export const useStore = create<AppState>()(
     }),
     {
       name: 'chzzk-store',
-      // favoriteChannels만 보존, selectedChannels, mainChannelId, layoutMode는 URL이 우선순위를 갖게끔 설계합니다.
-      partialize: (state) => ({ favoriteChannels: state.favoriteChannels }),
+      // URL이 우선순위를 갖지 않는 커스텀 채널 목록과 유저 오디오 설정만 로컬스토리지에 보존
+      partialize: (state) => ({ 
+        favoriteChannels: state.favoriteChannels,
+        isSingleAudioMode: state.isSingleAudioMode,
+      }),
       merge: (persistedState: any, currentState) => {
         return {
           ...currentState,

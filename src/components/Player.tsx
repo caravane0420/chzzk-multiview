@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useStore } from '../store/useStore';
 import { Star } from 'lucide-react';
 
@@ -9,6 +9,16 @@ interface PlayerProps {
 
 const Player: React.FC<PlayerProps> = ({ channelId, isMain = false }) => {
   const setMainChannel = useStore((state) => state.setMainChannel);
+  const isSingleAudioMode = useStore((state) => state.isSingleAudioMode);
+
+  // isMain, isSingleAudioMode 속성에 의존하여 URL을 메모이제이션
+  // 조건이 바뀔 때만 iframe의 src 속성을 갱신하므로 불필요한 영상 리로드 차단 최적화
+  const iframeSrc = useMemo(() => {
+    if (!isSingleAudioMode) {
+      return `https://chzzk.naver.com/live/${channelId}`;
+    }
+    return `https://chzzk.naver.com/live/${channelId}?muted=${!isMain}`;
+  }, [channelId, isSingleAudioMode, isMain]);
 
   return (
     <div 
@@ -19,7 +29,7 @@ const Player: React.FC<PlayerProps> = ({ channelId, isMain = false }) => {
       }`}
     >
       <iframe
-        src={`https://chzzk.naver.com/live/${channelId}`}
+        src={iframeSrc}
         title={`Stelview Player - ${channelId}`}
         allow="autoplay; fullscreen"
         allowFullScreen

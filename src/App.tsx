@@ -1,8 +1,9 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import MultiViewGrid from './components/MultiViewGrid';
-import { useStore, LayoutMode } from './store/useStore';
+import { useStore } from './store/useStore';
+import type { LayoutMode } from './store/useStore';
 
 const App: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -12,8 +13,6 @@ const App: React.FC = () => {
     layoutMode, 
     fetchLiveStatus 
   } = useStore();
-
-  const isInitialMount = useRef(true);
 
   // 1. URL -> Store 동기화 (최초 접속 또는 뒤로가기 시 URL 값을 Zustand에 덮어씌움)
   useEffect(() => {
@@ -39,7 +38,7 @@ const App: React.FC = () => {
     
     const currentChannelsParam = searchParams.get('channels') || '';
     const currentMainParam = searchParams.get('main') || '';
-    const currentLayoutParam = searchParams.get('layout') || '';
+    const currentLayoutParam = searchParams.get('layout') || 'grid';
 
     // 상태와 URL 파라미터가 실제로 변했을 때만 주소줄 변경
     if (
