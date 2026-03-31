@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { chzzkFetch } from '../api/client';
 import type { ChzzkLive, ChzzkResponse } from '../types/chzzk';
+import { STELLIVE_MEMBERS } from '../data/stellive';
 
 interface LiveStatusResult {
   channelId: string;
@@ -24,7 +25,7 @@ interface AppState {
 export const useStore = create<AppState>()(
   persist(
     (set, get) => ({
-      favoriteChannels: [], // 빈 배열 초기값 세팅 (persist로 덮어쓰기됨)
+      favoriteChannels: [], // 로컬스토리지 기반 커스텀 리스트
       liveData: {},
       selectedChannels: [],
       isLoading: false,
@@ -67,9 +68,13 @@ export const useStore = create<AppState>()(
 
       fetchLiveStatus: async (force = false) => {
         const { favoriteChannels, lastFetchTime, isLoading } = get();
-        const safeFavorites = Array.isArray(favoriteChannels) ? favoriteChannels : [];
         
-        if (safeFavorites.length === 0) {
+        // 스텔라이브 멤버를 데이터 소스에 강제 통합
+        const stelliveIds = STELLIVE_MEMBERS.map(member => member.id);
+        const safeFavorites = Array.isArray(favoriteChannels) ? favoriteChannels : [];
+        const allTargetIds = Array.from(new Set([...stelliveIds, ...safeFavorites]));
+        
+        if (allTargetIds.length === 0) {
           set({ liveData: {} });
           return;
         }
@@ -84,7 +89,7 @@ export const useStore = create<AppState>()(
         set({ isLoading: true });
 
         try {
-          const promises = safeFavorites.map(async (channelId) => {
+          const promises = allTargetIds.map(async (channelId) => {
             try {
               const response = await chzzkFetch<ChzzkResponse<ChzzkLive>>(
                 `/open/v1/lives/${channelId}`
@@ -117,7 +122,6 @@ export const useStore = create<AppState>()(
     {
       name: 'chzzk-store',
       partialize: (state) => ({ favoriteChannels: state.favoriteChannels }),
-      // persist 저장소 값 오류 런타임 방어
       merge: (persistedState: any, currentState) => {
         return {
           ...currentState,
