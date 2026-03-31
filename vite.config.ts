@@ -6,9 +6,10 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/open': {
-        target: 'https://openapi.chzzk.naver.com',
+      '/api': {
+        target: 'https://api.chzzk.naver.com',
         changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
       }
     }
   }

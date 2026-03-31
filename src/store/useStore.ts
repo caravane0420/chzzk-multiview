@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { chzzkFetch } from '../api/client';
-import type { ChzzkLive, ChzzkResponse } from '../types/chzzk';
+import type { ChzzkLive } from '../types/chzzk';
 import { STELLIVE_MEMBERS } from '../data/stellive';
 
 interface LiveStatusResult {
@@ -25,7 +24,7 @@ interface AppState {
 export const useStore = create<AppState>()(
   persist(
     (set, get) => ({
-      favoriteChannels: [], // 로컬스토리지 기반 커스텀 리스트
+      favoriteChannels: [], // 로컬스토리지 기반 커스텀 목록
       liveData: {},
       selectedChannels: [],
       isLoading: false,
@@ -69,7 +68,7 @@ export const useStore = create<AppState>()(
       fetchLiveStatus: async (force = false) => {
         const { favoriteChannels, lastFetchTime, isLoading } = get();
         
-        // 스텔라이브 멤버를 데이터 소스에 강제 통합
+        // 스텔라이브 멤버를 통합해서 조회
         const stelliveIds = STELLIVE_MEMBERS.map(member => member.id);
         const safeFavorites = Array.isArray(favoriteChannels) ? favoriteChannels : [];
         const allTargetIds = Array.from(new Set([...stelliveIds, ...safeFavorites]));
@@ -91,10 +90,39 @@ export const useStore = create<AppState>()(
         try {
           const promises = allTargetIds.map(async (channelId) => {
             try {
-              const response = await chzzkFetch<ChzzkResponse<ChzzkLive>>(
-                `/open/v1/lives/${channelId}`
-              );
-              return { channelId, data: response.content || null } as LiveStatusResult;
+              // 치지직 비공식 API로 변경 (Vite 프록시 /api 활용)
+              const response = await fetch(`/api/service/v2/channels/${channelId}/live-detail`);
+              
+              if (!response.ok) throw new Error('API Error');
+              
+              const json = await response.json();
+
+              // 응답 데이터 기반 생방송 유무 판단
+              if (json?.content?.status === 'OPEN') {
+                // 기존 Sidebar UI 구조와 호환성을 위해 속성 강제 매핑
+                const data: ChzzkLive = {
+                  liveTitle: json.content.liveTitle,
+                  liveThumbnailImageUrl: json.content.liveImageUrl,
+                  concurrentUserCount: json.content.concurrentUserCount,
+                  channelName: json.content.channel.channelName,
+                  channelImageUrl: json.content.channel.channelImageUrl,
+                  liveCategoryValue: json.content.liveCategoryValue,
+                  
+                  // ChzzkLive 타입 경고를 막기 위한 필수 더미값 방어 구조
+                  liveId: json.content.liveId || 0,
+                  defaultThumbnailImageUrl: json.content.defaultThumbnailImageUrl || '',
+                  openDate: json.content.openDate || '',
+                  closeDate: json.content.closeDate || '',
+                  chatChannelId: json.content.chatChannelId || '',
+                  categoryType: json.content.categoryType || '',
+                };
+
+                return { channelId, data } as LiveStatusResult;
+              }
+              
+              // status === 'CLOSE' 이거나 데이터가 없을 경우
+              return { channelId, data: null } as LiveStatusResult;
+
             } catch (error) {
               return { channelId, data: null } as LiveStatusResult;
             }
