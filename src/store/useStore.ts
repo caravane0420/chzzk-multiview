@@ -8,25 +8,33 @@ interface LiveStatusResult {
   data: ChzzkLive | null;
 }
 
+export type LayoutMode = 'grid' | 'main-sub';
+
 interface AppState {
   favoriteChannels: string[];
   liveData: Record<string, ChzzkLive | null>;
   selectedChannels: string[];
+  mainChannelId: string | null;
+  layoutMode: LayoutMode;
   isLoading: boolean;
   lastFetchTime: number;
   
   addFavoriteChannel: (channelId: string) => void;
   removeFavoriteChannel: (channelId: string) => void;
   toggleSelectedChannel: (channelId: string) => void;
+  setMainChannel: (channelId: string | null) => void;
+  setLayoutMode: (mode: LayoutMode) => void;
   fetchLiveStatus: (force?: boolean) => Promise<void>;
 }
 
 export const useStore = create<AppState>()(
   persist(
     (set, get) => ({
-      favoriteChannels: [], // 로컬스토리지 기반 커스텀 목록
+      favoriteChannels: [], 
       liveData: {},
       selectedChannels: [],
+      mainChannelId: null,      // 메인 채널 지정
+      layoutMode: 'grid',       // 초기 레이아웃 모드
       isLoading: false,
       lastFetchTime: 0,
 
@@ -51,6 +59,7 @@ export const useStore = create<AppState>()(
           return {
             favoriteChannels: safeFavorites.filter((id) => id !== channelId),
             selectedChannels: safeSelected.filter((id) => id !== channelId),
+            mainChannelId: state.mainChannelId === channelId ? null : state.mainChannelId,
             liveData: newLiveData,
           };
         }),
@@ -58,17 +67,26 @@ export const useStore = create<AppState>()(
       toggleSelectedChannel: (channelId) =>
         set((state) => {
           const safeSelected = Array.isArray(state.selectedChannels) ? state.selectedChannels : [];
+          const isRemoving = safeSelected.includes(channelId);
+          
           return {
-            selectedChannels: safeSelected.includes(channelId)
+            selectedChannels: isRemoving
               ? safeSelected.filter((id) => id !== channelId)
               : [...safeSelected, channelId],
+            // 만약 해제되는 채널이 메인 채널이라면, 메인 채널 여부도 초기화
+            mainChannelId: isRemoving && state.mainChannelId === channelId ? null : state.mainChannelId,
           };
         }),
+
+      setMainChannel: (channelId) =>
+        set({ mainChannelId: channelId }),
+
+      setLayoutMode: (mode) =>
+        set({ layoutMode: mode }),
 
       fetchLiveStatus: async (force = false) => {
         const { favoriteChannels, lastFetchTime, isLoading } = get();
         
-        // 스텔라이브 멤버를 통합해서 조회
         const stelliveIds = STELLIVE_MEMBERS.map(member => member.id);
         const safeFavorites = Array.isArray(favoriteChannels) ? favoriteChannels : [];
         const allTargetIds = Array.from(new Set([...stelliveIds, ...safeFavorites]));
@@ -90,16 +108,13 @@ export const useStore = create<AppState>()(
         try {
           const promises = allTargetIds.map(async (channelId) => {
             try {
-              // 치지직 비공식 API로 변경 (Vite 프록시 /api 활용)
               const response = await fetch(`/api/service/v2/channels/${channelId}/live-detail`);
               
               if (!response.ok) throw new Error('API Error');
               
               const json = await response.json();
 
-              // 응답 데이터 기반 생방송 유무 판단
               if (json?.content?.status === 'OPEN') {
-                // 기존 Sidebar UI 구조와 호환성을 위해 속성 강제 매핑
                 const data: ChzzkLive = {
                   liveTitle: json.content.liveTitle,
                   liveThumbnailImageUrl: json.content.liveImageUrl,
@@ -108,7 +123,6 @@ export const useStore = create<AppState>()(
                   channelImageUrl: json.content.channel.channelImageUrl,
                   liveCategoryValue: json.content.liveCategoryValue,
                   
-                  // ChzzkLive 타입 경고를 막기 위한 필수 더미값 방어 구조
                   liveId: json.content.liveId || 0,
                   defaultThumbnailImageUrl: json.content.defaultThumbnailImageUrl || '',
                   openDate: json.content.openDate || '',
@@ -120,7 +134,6 @@ export const useStore = create<AppState>()(
                 return { channelId, data } as LiveStatusResult;
               }
               
-              // status === 'CLOSE' 이거나 데이터가 없을 경우
               return { channelId, data: null } as LiveStatusResult;
 
             } catch (error) {
@@ -149,6 +162,7 @@ export const useStore = create<AppState>()(
     }),
     {
       name: 'chzzk-store',
+      // favoriteChannels만 보존, selectedChannels, mainChannelId, layoutMode는 URL이 우선순위를 갖게끔 설계합니다.
       partialize: (state) => ({ favoriteChannels: state.favoriteChannels }),
       merge: (persistedState: any, currentState) => {
         return {

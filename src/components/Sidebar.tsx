@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
-import { Plus, Trash2, RefreshCw } from 'lucide-react';
+import { Plus, Trash2, RefreshCw, LayoutGrid, PanelLeft, Share2 } from 'lucide-react';
 import { STELLIVE_MEMBERS } from '../data/stellive';
 
 const Sidebar: React.FC = () => {
@@ -9,6 +9,8 @@ const Sidebar: React.FC = () => {
     liveData, 
     selectedChannels, 
     isLoading,
+    layoutMode,
+    setLayoutMode,
     toggleSelectedChannel,
     addFavoriteChannel,
     removeFavoriteChannel,
@@ -16,6 +18,7 @@ const Sidebar: React.FC = () => {
   } = useStore();
 
   const [newChannelId, setNewChannelId] = useState('');
+  const [toastMessage, setToastMessage] = useState('');
 
   const safeFavorites = Array.isArray(favoriteChannels) ? favoriteChannels : [];
   const safeSelected = Array.isArray(selectedChannels) ? selectedChannels : [];
@@ -43,6 +46,17 @@ const Sidebar: React.FC = () => {
 
   const handleManualRefresh = () => {
     fetchLiveStatus(true); 
+  };
+
+  const handleShare = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setToastMessage('클립보드에 공유 링크가 복사되었습니다! 🎉');
+      // 3초 후 토스트 숨김
+      setTimeout(() => setToastMessage(''), 3000);
+    } catch (err) {
+      alert('공유 링크 복사에 실패했습니다.');
+    }
   };
 
   const placeholderImg = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMzMzMiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZmlsbD0iIzY2NiIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5ObyBJbWFnZTwvdGV4dD48L3N2Zz4=';
@@ -146,60 +160,104 @@ const Sidebar: React.FC = () => {
   };
 
   return (
-    <aside className="w-[320px] h-screen bg-[#0A0514]/80 backdrop-blur-xl border-r border-[#6D28D9]/20 flex flex-col p-5 overflow-y-auto shrink-0 z-50 shadow-[4px_0_24px_rgba(0,0,0,0.5)] relative">
-      <div className="flex justify-between items-center mb-8">
-        <h2 className="text-3xl font-black tracking-tighter bg-gradient-to-br from-[#F3E8FF] via-[#D8B4FE] to-[#A855F7] bg-clip-text text-transparent drop-shadow-[0_2px_10px_rgba(168,85,247,0.4)]">
-          Stelview
-        </h2>
-        <button 
-          onClick={handleManualRefresh}
-          className={`p-2 rounded-lg hover:bg-[#A855F7]/20 transition-all text-[#D8B4FE]/60 hover:text-[#F3E8FF] border border-transparent hover:border-[#A855F7]/30 ${isLoading ? 'animate-spin opacity-50 cursor-not-allowed text-[#A855F7]' : ''}`}
-          disabled={isLoading}
-          title="새로고침"
-        >
-          <RefreshCw size={18} />
-        </button>
-      </div>
+    <>
+      <aside className="w-[320px] h-screen bg-[#0A0514]/80 backdrop-blur-xl border-r border-[#6D28D9]/20 flex flex-col p-5 overflow-y-auto shrink-0 z-50 shadow-[4px_0_24px_rgba(0,0,0,0.5)] relative">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-3xl font-black tracking-tighter bg-gradient-to-br from-[#F3E8FF] via-[#D8B4FE] to-[#A855F7] bg-clip-text text-transparent drop-shadow-[0_2px_10px_rgba(168,85,247,0.4)]">
+            Stelview
+          </h2>
+          <div className="flex gap-2">
+            <button 
+              onClick={handleShare}
+              className="p-2 rounded-lg bg-[#A855F7]/10 hover:bg-[#A855F7]/30 transition-all text-[#D8B4FE] border border-[#A855F7]/20 hover:shadow-[0_0_15px_rgba(168,85,247,0.3)]"
+              title="이 셋팅으로 보낼 공유 링크 복사하기"
+            >
+              <Share2 size={18} />
+            </button>
+            <button 
+              onClick={handleManualRefresh}
+              className={`p-2 rounded-lg hover:bg-[#A855F7]/20 transition-all text-[#D8B4FE]/60 hover:text-[#F3E8FF] border border-transparent hover:border-[#A855F7]/30 ${isLoading ? 'animate-spin opacity-50 cursor-not-allowed text-[#A855F7]' : ''}`}
+              disabled={isLoading}
+              title="새로고침"
+            >
+              <RefreshCw size={18} />
+            </button>
+          </div>
+        </div>
 
-      {renderGenerationSection('1기생 (Mystic)', 1)}
-      {renderGenerationSection('2기생 (Universe)', 2)}
-      {renderGenerationSection('3기생 (Cliché)', 3)}
-      
-      {/* 내 즐겨찾기 섹션 (스텔라이브 외 채널들) */}
-      <div className="mt-2 pt-6 border-t border-[#6D28D9]/30">
-        <h3 className="text-sm font-bold text-[#F3E8FF] mb-4 px-1 flex items-center gap-2 drop-shadow-md">
-           <span className="w-1 h-3.5 bg-gradient-to-b from-[#A855F7] to-[#4C1D95] rounded-full inline-block"></span>
-           스텔라이브 외 채널 추가
-        </h3>
-        <form onSubmit={handleAddChannel} className="flex gap-2 mb-5">
-          <input
-            type="text"
-            placeholder="치지직 ID 입력"
-            value={newChannelId}
-            onChange={(e) => setNewChannelId(e.target.value)}
-            className="flex-1 bg-[#1E1B4B]/30 border border-[#8B5CF6]/30 rounded-lg px-3 py-2.5 text-sm text-white placeholder-[#8B5CF6]/50 focus:outline-none focus:border-[#D8B4FE] focus:ring-2 focus:ring-[#A855F7]/40 transition-all shadow-inner"
-          />
+        {/* 레이아웃 컨트롤 패널 */}
+        <div className="flex bg-[#1E1B4B]/40 rounded-xl p-1.5 border border-[#6D28D9]/20 mb-8 shadow-inner relative">
           <button
-            type="submit"
-            disabled={!newChannelId.trim() || isLoading}
-            className="bg-[#8B5CF6]/20 text-[#D8B4FE] hover:bg-[#8B5CF6]/40 disabled:opacity-50 disabled:cursor-not-allowed p-2.5 rounded-lg transition-all flex items-center justify-center shrink-0 border border-[#8B5CF6]/40 shadow-lg hover:shadow-[0_0_15px_rgba(168,85,247,0.4)]"
-            title="채널 추가"
+            onClick={() => setLayoutMode('grid')}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-semibold rounded-lg transition-all z-10 ${
+              layoutMode === 'grid' 
+                ? 'bg-gradient-to-br from-[#A855F7] to-[#7E22CE] text-white shadow-[0_0_15px_rgba(168,85,247,0.5)]' 
+                : 'text-[#D8B4FE]/60 hover:text-[#D8B4FE] hover:bg-white/5'
+            }`}
           >
-            <Plus size={20} />
+            <LayoutGrid size={16} />
+            바둑판 뷰
           </button>
-        </form>
+          <button
+            onClick={() => setLayoutMode('main-sub')}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-semibold rounded-lg transition-all z-10 ${
+              layoutMode === 'main-sub' 
+                ? 'bg-gradient-to-br from-[#A855F7] to-[#7E22CE] text-white shadow-[0_0_15px_rgba(168,85,247,0.5)]' 
+                : 'text-[#D8B4FE]/60 hover:text-[#D8B4FE] hover:bg-white/5'
+            }`}
+          >
+            <PanelLeft size={16} />
+            집중 뷰
+          </button>
+        </div>
 
-        {safeFavorites.length === 0 ? (
-          <div className="text-[#8B5CF6]/50 text-xs py-6 flex flex-col items-center justify-center text-center bg-[#1E1B4B]/10 rounded-xl border border-dashed border-[#8B5CF6]/20">
-            등록된 추가 채널이 없습니다.
-          </div>
-        ) : (
-          <div className="flex flex-col gap-3">
-            {safeFavorites.map((channelId) => renderChannelCard(channelId, undefined, true))}
-          </div>
-        )}
-      </div>
-    </aside>
+        {renderGenerationSection('1기생 (Mystic)', 1)}
+        {renderGenerationSection('2기생 (Universe)', 2)}
+        {renderGenerationSection('3기생 (Cliché)', 3)}
+        
+        {/* 내 즐겨찾기 섹션 (스텔라이브 외 채널들) */}
+        <div className="mt-2 pt-6 border-t border-[#6D28D9]/30">
+          <h3 className="text-sm font-bold text-[#F3E8FF] mb-4 px-1 flex items-center gap-2 drop-shadow-md">
+             <span className="w-1 h-3.5 bg-gradient-to-b from-[#A855F7] to-[#4C1D95] rounded-full inline-block"></span>
+             스텔라이브 외 채널 추가
+          </h3>
+          <form onSubmit={handleAddChannel} className="flex gap-2 mb-5">
+            <input
+              type="text"
+              placeholder="치지직 ID 입력"
+              value={newChannelId}
+              onChange={(e) => setNewChannelId(e.target.value)}
+              className="flex-1 bg-[#1E1B4B]/30 border border-[#8B5CF6]/30 rounded-lg px-3 py-2.5 text-sm text-white placeholder-[#8B5CF6]/50 focus:outline-none focus:border-[#D8B4FE] focus:ring-2 focus:ring-[#A855F7]/40 transition-all shadow-inner"
+            />
+            <button
+              type="submit"
+              disabled={!newChannelId.trim() || isLoading}
+              className="bg-[#8B5CF6]/20 text-[#D8B4FE] hover:bg-[#8B5CF6]/40 disabled:opacity-50 disabled:cursor-not-allowed p-2.5 rounded-lg transition-all flex items-center justify-center shrink-0 border border-[#8B5CF6]/40 shadow-lg hover:shadow-[0_0_15px_rgba(168,85,247,0.4)]"
+              title="채널 추가"
+            >
+              <Plus size={20} />
+            </button>
+          </form>
+
+          {safeFavorites.length === 0 ? (
+            <div className="text-[#8B5CF6]/50 text-xs py-6 flex flex-col items-center justify-center text-center bg-[#1E1B4B]/10 rounded-xl border border-dashed border-[#8B5CF6]/20">
+              등록된 추가 채널이 없습니다.
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {safeFavorites.map((channelId) => renderChannelCard(channelId, undefined, true))}
+            </div>
+          )}
+        </div>
+      </aside>
+
+      {/* 글로벌 공유 토스트 알림 오버레이 */}
+      {toastMessage && (
+        <div className="fixed bottom-8 left-[calc(50%+160px)] -translate-x-1/2 bg-[#2E1065]/95 backdrop-blur-md text-white px-8 py-3.5 rounded-full text-sm font-bold shadow-[0_8px_30px_rgba(168,85,247,0.6)] border border-[#A855F7] z-[100] transition-all transform animate-[bounce_1s_infinite]">
+          {toastMessage}
+        </div>
+      )}
+    </>
   );
 };
 
