@@ -32,8 +32,8 @@ const MultiViewGrid: React.FC = () => {
   }
 
   return (
-    <main className="flex-1 bg-transparent h-screen w-full overflow-hidden p-3 md:p-4">
-      <div className={`${gridClass} gap-3 md:gap-4 h-full w-full`}>
+    <main className="flex-1 h-full w-full p-2 bg-transparent overflow-hidden">
+      <div className={`${gridClass} gap-2 h-full w-full`}>
         {safeSelected.map((channelId) => (
           <Player key={channelId} channelId={channelId} />
         ))}

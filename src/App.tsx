@@ -41,9 +41,9 @@ const App: React.FC = () => {
   }, [fetchLiveStatus]);
 
   // 스텔라이브 전용 '심우주, 밤하늘' 컨셉 테마
-  // w-screen h-screen overflow-hidden 으로 스크롤이나 여백 없는 하드 핏 유지
+  // w-screen h-[100dvh] overflow-hidden flex 로 스크롤이나 여백 없는 하드 핏 유지
   return (
-    <div className="flex w-screen h-screen overflow-hidden bg-[#05010B] text-white selection:bg-[#8B5CF6] selection:text-white relative z-0">
+    <div className="flex h-[100dvh] w-screen overflow-hidden bg-[#05010B] text-white selection:bg-[#8B5CF6] selection:text-white relative z-0">
       {/* 백그라운드 별빛 + 보라색 성운 효과 */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[#3B0764]/40 via-[#05010B] to-[#0A0514] -z-10 pointer-events-none" />
       <div className="absolute top-[10%] left-[20%] w-[500px] h-[500px] bg-[#6D28D9]/10 blur-[150px] rounded-full pointer-events-none" />
