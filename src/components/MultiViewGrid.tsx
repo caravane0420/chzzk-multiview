@@ -1,35 +1,36 @@
-import React, { useMemo, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import { useStore } from '../store/useStore';
 import Player from './Player';
+import { Responsive, WidthProvider } from 'react-grid-layout';
+import type { Layout } from 'react-grid-layout';
+import 'react-grid-layout/css/styles.css';
+import 'react-resizable/css/styles.css';
+
+const ResponsiveGridLayout = WidthProvider(Responsive);
 
 const MultiViewGrid: React.FC = () => {
-  const { selectedChannels, mainChannelId, layoutMode, setLayoutMode, setMainChannel } = useStore();
-  
+  const { selectedChannels, gridLayouts, setGridLayouts } = useStore();
   const safeSelected = Array.isArray(selectedChannels) ? selectedChannels : [];
 
-  // 자동 레이아웃 방어 코드: 5개 이상일 때 강제로 집중 뷰로 전환
-  useEffect(() => {
-    if (safeSelected.length >= 5 && layoutMode !== 'main-sub') {
-      setLayoutMode('main-sub');
-      // 집중 뷰 전환 시 메인 채널이 없으면 리스트 첫번째 채널을 메인으로 자동 배정
-      if (!mainChannelId || !safeSelected.includes(mainChannelId)) {
-        setMainChannel(safeSelected[0]);
-      }
-    }
-  }, [safeSelected, layoutMode, mainChannelId, setLayoutMode, setMainChannel]);
+  const defaultLayout = useMemo(() => {
+    return safeSelected.map((channelId, index) => {
+      const existing = gridLayouts.find((l) => l.i === channelId);
+      if (existing) return existing;
+      return {
+        i: channelId,
+        x: (index % 3) * 4,
+        y: Math.floor(index / 3) * 4,
+        w: 4,
+        h: 3,
+        minW: 2,
+        minH: 2
+      };
+    });
+  }, [safeSelected, gridLayouts]);
 
-  // 채널이 1개일 땐 사용자가 main-sub 모드라고 하더라도 무조건 화면을 가득 채우는 Grid 모드로 인터페이스 고정
-  const effectiveLayoutMode = safeSelected.length === 1 ? 'grid' : layoutMode;
-
-  const gridClass = useMemo(() => {
-    const length = safeSelected.length;
-    if (length === 0) return 'flex flex-1 items-center justify-center';
-    if (length === 1) return 'grid grid-cols-1 w-full h-full';
-    if (length === 2) return 'grid grid-cols-2 w-full h-full';
-    if (length <= 4) return 'grid grid-cols-2 grid-rows-2 w-full h-full';
-    if (length <= 6) return 'grid grid-cols-3 grid-rows-2 w-full h-full';
-    return 'grid grid-cols-3 grid-rows-3 w-full h-full';
-  }, [safeSelected.length]);
+  const handleLayoutChange = (newLayout: Layout[]) => {
+    setGridLayouts(newLayout);
+  };
 
   if (safeSelected.length === 0) {
     return (
@@ -45,41 +46,40 @@ const MultiViewGrid: React.FC = () => {
     );
   }
 
-  // ✨ Main-Sub 레이아웃 분기
-  if (effectiveLayoutMode === 'main-sub' && mainChannelId && safeSelected.includes(mainChannelId)) {
-    const subChannels = safeSelected.filter((id) => id !== mainChannelId);
-    
-    return (
-      <main className="flex-1 flex flex-col xl:flex-row bg-transparent h-full w-full overflow-hidden p-2 gap-2">
-        {/* 1. 좌측 거대한 메인 시야 영역 (너비 75% 비율 => flex-[3]) */}
-        <div className="flex-[3] h-full w-full relative">
-          <Player channelId={mainChannelId} isMain={true} />
-        </div>
-        
-        {/* 2. 우측 좁은 서브 시야 영역 (너비 25% 비율 => flex-[1], 세로 스크롤 리스트) */}
-        {subChannels.length > 0 && (
-          <div className="flex-[1] h-full w-full overflow-hidden bg-[#0A0514]/30 rounded-lg border border-white/5 p-1.5 shadow-inner relative flex flex-col">
-            <div className="flex flex-col gap-2 h-full w-full overflow-y-auto custom-scrollbar pr-1 pb-1">
-              {subChannels.map((channelId) => (
-                <div key={channelId} className="w-full h-1/2 min-h-[300px] shrink-0">
-                  <Player channelId={channelId} isMain={false} />
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </main>
-    );
-  }
-
-  // ⏹️ 기본 등분할 Grid 레이아웃 (layout === 'grid' 거나 메인 채널이 지정 안 된 경우)
   return (
-    <main className="flex-1 h-full w-full p-2 bg-transparent overflow-hidden">
-      <div className={`${gridClass} gap-2 h-full w-full`}>
+    <main className="flex-1 h-full w-full bg-transparent overflow-y-auto overflow-x-hidden custom-scrollbar relative p-2">
+      <ResponsiveGridLayout
+        className="layout"
+        layouts={{ lg: defaultLayout }}
+        breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
+        cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
+        rowHeight={100}
+        onLayoutChange={handleLayoutChange}
+        draggableHandle=".drag-handle"
+        isResizable={true}
+        margin={[8, 8]}
+        containerPadding={[0, 0]}
+      >
         {safeSelected.map((channelId) => (
-          <Player key={channelId} channelId={channelId} isMain={channelId === mainChannelId} />
+          <div key={channelId} className="group flex flex-col w-full h-full relative z-10 transition-shadow">
+            {/* 드래그 핸들 (상단) */}
+            <div 
+              className="drag-handle absolute top-0 left-0 w-full h-8 bg-gradient-to-b from-[#A855F7]/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-50 cursor-grab active:cursor-grabbing flex items-start justify-center pt-1.5 pointer-events-auto"
+              title="드래그하여 뷰포트 이동"
+            >
+              <div className="w-12 h-1.5 bg-white/80 rounded-full shadow-lg" />
+            </div>
+            
+            {/* 실제 플레이어 컨테이너 */}
+            <div className="flex-1 w-full h-full relative pointer-events-auto">
+              <Player channelId={channelId} />
+            </div>
+            
+            {/* iframe 드래그 끊김 방지 투명 오버레이 (드래그 중에만 사용할수 없으나 css hover로 어느정도 보완) */}
+            <div className="absolute inset-0 z-40 pointer-events-none group-active:pointer-events-auto" />
+          </div>
         ))}
-      </div>
+      </ResponsiveGridLayout>
     </main>
   );
 };

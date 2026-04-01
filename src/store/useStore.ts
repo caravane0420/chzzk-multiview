@@ -8,25 +8,20 @@ interface LiveStatusResult {
   data: ChzzkLive | null;
 }
 
-export type LayoutMode = 'grid' | 'main-sub';
-
+import type { Layout } from 'react-grid-layout';
 interface AppState {
   favoriteChannels: string[];
   liveData: Record<string, ChzzkLive | null>;
   selectedChannels: string[];
-  mainChannelId: string | null;
-  layoutMode: LayoutMode;
+  gridLayouts: Layout[];
   isLoading: boolean;
   lastFetchTime: number;
-  isSingleAudioMode: boolean;
   isSidebarOpen: boolean;
   
   addFavoriteChannel: (channelId: string) => void;
   removeFavoriteChannel: (channelId: string) => void;
   toggleSelectedChannel: (channelId: string) => void;
-  setMainChannel: (channelId: string | null) => void;
-  setLayoutMode: (mode: LayoutMode) => void;
-  toggleAudioMode: () => void;
+  setGridLayouts: (layouts: Layout[]) => void;
   toggleSidebar: () => void;
   fetchLiveStatus: (force?: boolean) => Promise<void>;
 }
@@ -37,11 +32,9 @@ export const useStore = create<AppState>()(
       favoriteChannels: [], 
       liveData: {},
       selectedChannels: [],
-      mainChannelId: null,      // 메인 채널 지정
-      layoutMode: 'grid',       // 초기 레이아웃 모드
+      gridLayouts: [],
       isLoading: false,
       lastFetchTime: 0,
-      isSingleAudioMode: true,
       isSidebarOpen: true,
 
       addFavoriteChannel: (channelId) =>
@@ -62,10 +55,10 @@ export const useStore = create<AppState>()(
           const safeFavorites = Array.isArray(state.favoriteChannels) ? state.favoriteChannels : [];
           const safeSelected = Array.isArray(state.selectedChannels) ? state.selectedChannels : [];
           
+          const newSelected = safeSelected.filter((id) => id !== channelId);
           return {
             favoriteChannels: safeFavorites.filter((id) => id !== channelId),
-            selectedChannels: safeSelected.filter((id) => id !== channelId),
-            mainChannelId: state.mainChannelId === channelId ? null : state.mainChannelId,
+            selectedChannels: newSelected,
             liveData: newLiveData,
           };
         }),
@@ -75,23 +68,17 @@ export const useStore = create<AppState>()(
           const safeSelected = Array.isArray(state.selectedChannels) ? state.selectedChannels : [];
           const isRemoving = safeSelected.includes(channelId);
           
+          const newSelected = isRemoving
+            ? safeSelected.filter((id) => id !== channelId)
+            : [...safeSelected, channelId];
+            
           return {
-            selectedChannels: isRemoving
-              ? safeSelected.filter((id) => id !== channelId)
-              : [...safeSelected, channelId],
-            // 만약 해제되는 채널이 메인 채널이라면, 메인 채널 여부도 초기화
-            mainChannelId: isRemoving && state.mainChannelId === channelId ? null : state.mainChannelId,
+            selectedChannels: newSelected,
           };
         }),
 
-      setMainChannel: (channelId) =>
-        set({ mainChannelId: channelId }),
-
-      setLayoutMode: (mode) =>
-        set({ layoutMode: mode }),
-
-      toggleAudioMode: () =>
-        set((state) => ({ isSingleAudioMode: !state.isSingleAudioMode })),
+      setGridLayouts: (layouts) =>
+        set({ gridLayouts: layouts }),
 
       toggleSidebar: () =>
         set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
@@ -177,7 +164,7 @@ export const useStore = create<AppState>()(
       // URL이 우선순위를 갖지 않는 커스텀 채널 목록, 유저 오디오 설정, 사이드바 토글 상태만 로컬스토리지에 보존
       partialize: (state) => ({ 
         favoriteChannels: state.favoriteChannels,
-        isSingleAudioMode: state.isSingleAudioMode,
+        gridLayouts: state.gridLayouts,
         isSidebarOpen: state.isSidebarOpen,
       }),
       merge: (persistedState: any, currentState) => {

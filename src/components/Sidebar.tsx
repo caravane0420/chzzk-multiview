@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
-import { Plus, Trash2, RefreshCw, LayoutGrid, PanelLeft, Share2, Volume2, VolumeX, PanelLeftClose, PanelRightOpen } from 'lucide-react';
+import { Plus, Trash2, RefreshCw, Share2, PanelLeftClose, PanelRightOpen } from 'lucide-react';
 import { STELLIVE_MEMBERS } from '../data/stellive';
 
 const Sidebar: React.FC = () => {
@@ -9,11 +9,7 @@ const Sidebar: React.FC = () => {
     liveData, 
     selectedChannels, 
     isLoading,
-    layoutMode,
-    isSingleAudioMode,
     isSidebarOpen,
-    setLayoutMode,
-    toggleAudioMode,
     toggleSidebar,
     toggleSelectedChannel,
     addFavoriteChannel,
@@ -203,66 +199,12 @@ const Sidebar: React.FC = () => {
           </div>
         </div>
 
-        {/* 1. 컨트롤 패널 컨테이너 (레이아웃 & 오디오 묶음) */}
-        <div className="flex flex-col gap-3 mb-6">
-          
-          {/* 레이아웃 전환 뷰 컨트롤 토글 */}
-          <div className="flex bg-[#1E1B4B]/40 rounded-xl p-1.5 border border-[#6D28D9]/20 shadow-inner relative">
-            <button
-              onClick={() => setLayoutMode('grid')}
-              className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-bold rounded-lg transition-all z-10 ${
-                layoutMode === 'grid' 
-                  ? 'bg-gradient-to-br from-[#A855F7] to-[#7E22CE] text-white shadow-[0_0_15px_rgba(168,85,247,0.5)]' 
-                  : 'text-[#D8B4FE]/60 hover:text-[#D8B4FE] hover:bg-white/5'
-              }`}
-            >
-              <LayoutGrid size={16} />
-              바둑판 뷰
-            </button>
-            <button
-              onClick={() => setLayoutMode('main-sub')}
-              className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-bold rounded-lg transition-all z-10 ${
-                layoutMode === 'main-sub' 
-                  ? 'bg-gradient-to-br from-[#A855F7] to-[#7E22CE] text-white shadow-[0_0_15px_rgba(168,85,247,0.5)]' 
-                  : 'text-[#D8B4FE]/60 hover:text-[#D8B4FE] hover:bg-white/5'
-              }`}
-            >
-              <PanelLeft size={16} />
-              집중 뷰
-            </button>
-          </div>
 
-          {/* 오디오 설정(메인 소리만 듣기) 컨트롤 토글 */}
-          <button 
-            onClick={toggleAudioMode}
-            className={`flex flex-col items-center justify-center w-full py-2.5 px-3 rounded-xl border transition-all ${
-              isSingleAudioMode
-                ? 'bg-[#A855F7]/20 border-[#A855F7]/50 shadow-[0_0_15px_rgba(168,85,247,0.2)]'
-                : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
-            }`}
-          >
-            <div className="flex items-center gap-2 mb-1">
-              {isSingleAudioMode ? (
-                <Volume2 size={16} className="text-[#D8B4FE]" />
-              ) : (
-                <VolumeX size={16} className="text-gray-400" />
-              )}
-              <span className={`text-sm font-bold ${isSingleAudioMode ? 'text-[#F3E8FF]' : 'text-gray-300'}`}>
-                메인 소리만 듣기
-              </span>
-            </div>
-            <p className={`text-[10px] ${isSingleAudioMode ? 'text-[#D8B4FE]/80' : 'text-gray-500'}`}>
-              {isSingleAudioMode 
-                ? '이제 메인 화면의 소리만 활성화됩니다' 
-                : '모든 화면의 소리가 섞여서 들립니다'}
-            </p>
-          </button>
-        </div>
 
         {/* 예쁜 구분선 */}
         <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-[#6D28D9]/40 to-transparent mb-4" />
 
-        {renderGenerationSection('1기생 (Mystic)', 1)}
+        {renderGenerationSection('1기생 (Everys)', 1)}
         {renderGenerationSection('2기생 (Universe)', 2)}
         {renderGenerationSection('3기생 (Cliché)', 3)}
         

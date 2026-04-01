@@ -3,30 +3,23 @@ import { useSearchParams } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import MultiViewGrid from './components/MultiViewGrid';
 import { useStore } from './store/useStore';
-import type { LayoutMode } from './store/useStore';
 
 const App: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { 
     selectedChannels, 
-    mainChannelId, 
-    layoutMode, 
     fetchLiveStatus 
   } = useStore();
 
   // 1. URL -> Store 동기화 (최초 접속 또는 뒤로가기 시 URL 값을 Zustand에 덮어씌움)
   useEffect(() => {
     const channelsParam = searchParams.get('channels');
-    const mainParam = searchParams.get('main');
-    const layoutParam = searchParams.get('layout') as LayoutMode;
 
     const ids = channelsParam ? channelsParam.split(',').filter(Boolean) : [];
     
     // 상태 병합. 배열 및 문자열 타입에 유의하여 안전하게 주입.
     useStore.setState({ 
       selectedChannels: ids,
-      mainChannelId: mainParam || null,
-      layoutMode: (layoutParam === 'grid' || layoutParam === 'main-sub') ? layoutParam : 'grid',
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
@@ -37,38 +30,23 @@ const App: React.FC = () => {
     const newChannelsStr = safeSelectedChannels.join(',');
     
     const currentChannelsParam = searchParams.get('channels') || '';
-    const currentMainParam = searchParams.get('main') || '';
-    const currentLayoutParam = searchParams.get('layout') || 'grid';
 
     // 상태와 URL 파라미터가 실제로 변했을 때만 주소줄 변경
     if (
-      currentChannelsParam !== newChannelsStr ||
-      currentMainParam !== (mainChannelId || '') ||
-      currentLayoutParam !== layoutMode
+      currentChannelsParam !== newChannelsStr
     ) {
       const nextParams = new URLSearchParams(searchParams);
       
       // 채널 배열이 비어있으면 쿼리 파라미터 전부 청소 (초기화)
       if (safeSelectedChannels.length === 0) {
         nextParams.delete('channels');
-        nextParams.delete('main');
-        nextParams.delete('layout');
       } else {
         nextParams.set('channels', newChannelsStr);
-
-        if (mainChannelId) {
-          nextParams.set('main', mainChannelId);
-        } else {
-          nextParams.delete('main');
-        }
-
-        // 레이아웃이 grid라도 기본 명시, 혹은 main-sub일 때 적용
-        nextParams.set('layout', layoutMode);
       }
 
       setSearchParams(nextParams, { replace: true });
     }
-  }, [selectedChannels, mainChannelId, layoutMode, searchParams, setSearchParams]);
+  }, [selectedChannels, searchParams, setSearchParams]);
 
   // 3. 앱 마운트 시 최초 데이터 로드
   useEffect(() => {
